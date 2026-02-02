@@ -50,7 +50,7 @@ class TheatreHall(models.Model):
 
 
 class Performance(models.Model):
-    showtime = models.DateTimeField()
+    show_time = models.DateTimeField()
     play = models.ForeignKey(Play, on_delete=models.CASCADE)
     theatre_hall = models.ForeignKey(TheatreHall, on_delete=models.CASCADE)
 
