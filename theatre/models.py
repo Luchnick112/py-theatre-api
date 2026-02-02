@@ -20,4 +20,19 @@ class Genre(models.Model):
         return self.name
 
 
+class Play(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    genres = models.ManyToManyField(Genre)
+    actors = models.ManyToManyField(Actor)
+
+    class Meta:
+        ordering = ["title"]
+
+    def __str__(self):
+        return self.title
+
+
+
+
 
