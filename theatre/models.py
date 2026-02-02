@@ -17,6 +17,9 @@ class Actor(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
+    class Meta:
+        verbose_name_plural = "genres"
+
     def __str__(self):
         return self.name
 
@@ -71,4 +74,3 @@ class Reservation(models.Model):
 
     def __str__(self):
         return str(self.created_at)
-
