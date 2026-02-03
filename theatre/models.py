@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
 
 class Actor(models.Model):
@@ -86,5 +87,51 @@ class Ticket(models.Model):
         related_name="tickets"
     )
 
+    @staticmethod
+    def validate_seat(
+            seat: int,
+            num_seats: int,
+            field_name: str,
+            error_to_raise
+    ):
+        if not (1 <= seat <= num_seats):
+            raise error_to_raise(
+                {
+                    field_name: f"{field_name} "
+                                f"must be in range [1, {num_seats}], "
+                                f"not {seat}",
+                }
+            )
+
+    def clean(self):
+        Ticket.validate_seat(
+            self.row,
+            self.performance.theatre_hall.rows,
+            "row", ValidationError
+        )
+        Ticket.validate_seat(
+            self.seat,
+            self.performance.theatre_hall.seats_in_row,
+            "seat",
+            ValidationError
+        )
+
+    def save(
+            self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None,
+    ):
+        self.full_clean()
+        super(Ticket, self).save(
+            force_insert, force_update, using, update_fields
+        )
+
     def __str__(self):
-        return self.row
+        return (
+            f"{str(self.performance)} (row: {self.row}, seat: {self.seat})"
+        )
+
+    class Meta:
+        unique_together = ("performance", "row", "seat")
