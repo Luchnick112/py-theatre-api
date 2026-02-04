@@ -73,43 +73,76 @@ class PerformanceListSerializer(serializers.ModelSerializer):
     show_time = serializers.DateTimeField(format="%d.%m.%Y %H:%M")
     theatre_hall = serializers.CharField(read_only=True, source="theatre_hall.name")
     play = serializers.CharField(read_only=True, source="play.title")
+    tickets_available = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Performance
-        fields = ("id", "play", "theatre_hall", "show_time")
+        fields = ("id", "play", "theatre_hall", "show_time", "tickets_available")
 
 
 class PerformanceDetailSerializer(PerformanceListSerializer):
     play = PlayDetailSerializer(read_only=True)
+    taken_seats = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field="seat",
+        source="tickets",
+    )
 
     class Meta:
         model = Performance
-        fields = ("id", "play", "theatre_hall", "show_time")
+        fields = ("id", "play", "theatre_hall", "show_time", "taken_seats")
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    performance = PerformanceListSerializer(read_only=True)
+    performance_id = serializers.PrimaryKeyRelatedField(
+        source="performance",
+        queryset=Performance.objects.all(),
+        write_only=True
+    )
 
     class Meta:
         model = Ticket
-        fields = ("id", "row", "seat", "performance", "reservation")
+        fields = ("id", "row", "seat", "performance_id", "performance", "reservation")
+        read_only_fields = ("reservation",)
 
     def validate(self, attrs):
         Ticket.validate_seat(
-            attrs["seat"], attrs["trip"].bus.num_seats, serializers.ValidationError
+            attrs["seat"],
+            attrs["performance"].theatre_hall.seats_in_row,
+            "seat",
+            serializers.ValidationError
         )
+        Ticket.validate_seat(
+            attrs["row"],
+            attrs["performance"].theatre_hall.rows,
+            "row",
+            serializers.ValidationError
+        )
+        return attrs
 
 
 class ReservationSerializer(serializers.ModelSerializer):
-    tickets = serializers.TicketSerializer(many=True)
+    tickets = TicketSerializer(many=True, allow_empty=False)
 
     class Meta:
         model = Reservation
         fields = ("id", "created_at", "user", "tickets")
+        read_only_fields = ("user", "created_at")
 
     def create(self, validated_data):
         with transaction.atomic():
             tickets_data = validated_data.pop("tickets")
-            order = Reservation.objects.create(**validated_data)
+            reservation = Reservation.objects.create(**validated_data)
             for ticket_data in tickets_data:
-                Ticket.objects.create(order=order, **ticket_data)
-            return order
+                Ticket.objects.create(reservation=reservation, **ticket_data)
+            return reservation
+
+
+class TicketListSerializer(TicketSerializer):
+    performance = PerformanceListSerializer(read_only=True)
+
+
+class ReservationListSerializer(ReservationSerializer):
+    tickets = TicketListSerializer(many=True, read_only=False)
