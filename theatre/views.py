@@ -130,10 +130,6 @@ class TheatreHallViewSet(viewsets.ModelViewSet):
 
         return TheatreHallSerializer
 
-class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.all()
-    serializer_class = TicketSerializer
-
 
 class ReservationViewSet(
     mixins.ListModelMixin,

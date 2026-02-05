@@ -1,5 +1,9 @@
+import pathlib
+import uuid
+
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
 
@@ -50,12 +54,25 @@ class TheatreHall(models.Model):
         return self.name
 
 
+def performance_image_path(instance: "Performance" , filename: str) -> pathlib.Path:
+    filename = (
+        f"{slugify(instance.title)}-{uuid.uuid4()}"
+        + pathlib.Path(filename).suffix
+    )
+    return pathlib.Path("uploads/performances/") / pathlib.Path(filename)
+
+
 class Performance(models.Model):
     show_time = models.DateTimeField()
     play = models.ForeignKey(Play, on_delete=models.CASCADE)
     theatre_hall = models.ForeignKey(
         TheatreHall,
         on_delete=models.CASCADE
+    )
+    image = models.ImageField(
+        upload_to=performance_image_path,
+        null=True,
+        blank=True
     )
 
 
