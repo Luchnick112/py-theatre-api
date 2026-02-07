@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from django.db.models import F, Count
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -13,14 +15,13 @@ from theatre.models import (
     Play,
     Performance,
     TheatreHall,
-    Ticket, Reservation
+    Reservation
 )
 from theatre.serializers import (
     GenreSerializer,
     ActorSerializer,
     PerformanceSerializer,
     TheatreHallSerializer,
-    TicketSerializer,
     ReservationSerializer,
     PlaySerializer,
     PlayDetailSerializer,
@@ -98,6 +99,33 @@ class PlayViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "actors",
+                required=False,
+                type=OpenApiTypes.INT,
+                description="Filter by theatre actors ID (ex. ?actors=3)",
+            ),
+            OpenApiParameter(
+                "genres",
+                required=False,
+                type=OpenApiTypes.INT,
+                description="Filter by genres IDs (ex. ?genres=2)",
+            ),
+            OpenApiParameter(
+                "titles",
+                required=False,
+                type=OpenApiTypes.STR,
+                description="Filter by play title (ex. ?titles='gamlet')",
+            ),
+        ],
+        description="Retrieve a list of theatre plays with optional filters.",
+        responses={200: PlaySerializer},
+    )
+    def list(self, request, *args, **kwargs):
+        """Get list of movie sessions"""
+        return super().list(request, *args, **kwargs)
 
 class PerformanceViewSet(viewsets.ModelViewSet):
     queryset = Performance.objects.all()
@@ -139,6 +167,28 @@ class PerformanceViewSet(viewsets.ModelViewSet):
                         )
 
         return queryset.distinct()
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "play",
+                required=False,
+                type=OpenApiTypes.INT,
+                description="Filter by theatre play ID (ex. ?play=3)",
+            ),
+            OpenApiParameter(
+                "date",
+                required=False,
+                type=OpenApiTypes.DATE,
+                description="Filter by date of performance (ex. ?date=2026-02-21)",
+            ),
+        ],
+        description="Retrieve a list of theatre performances with optional filters.",
+        responses={200: PerformanceListSerializer},
+    )
+    def list(self, request, *args, **kwargs):
+        """Get list of movie sessions"""
+        return super().list(request, *args, **kwargs)
 
 
 class TheatreHallViewSet(viewsets.ModelViewSet):
