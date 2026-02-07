@@ -1,8 +1,10 @@
 from datetime import datetime
 
 from django.db.models import F, Count
-from rest_framework import viewsets, mixins
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, mixins, status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from theatre.models import (
@@ -21,8 +23,12 @@ from theatre.serializers import (
     TicketSerializer,
     ReservationSerializer,
     PlaySerializer,
-    PlayDetailSerializer, PerformanceListSerializer, PerformanceDetailSerializer, TheatreHallDetailSerializer,
+    PlayDetailSerializer,
+    PerformanceListSerializer,
+    PerformanceDetailSerializer,
+    TheatreHallDetailSerializer,
     ReservationListSerializer,
+    PlayImageSerializer,
 )
 
 
@@ -49,8 +55,11 @@ class PlayViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return PlaySerializer
 
-        if self.action == "retrieve":
+        elif self.action == "retrieve":
             return PlayDetailSerializer
+
+        elif self.action == "upload_image":
+            return PlayImageSerializer
 
         return PlaySerializer
 
@@ -73,6 +82,21 @@ class PlayViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(title__icontains=title)
 
         return queryset.distinct()
+
+    @action(
+        methods=["post"],
+        detail=True,
+        permission_classes=[IsAdminUser],
+        url_path="upload-image"
+    )
+    def upload_image(self, request, pk=None):
+        movie = self.get_object()
+        serializer = self.get_serializer(movie, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PerformanceViewSet(viewsets.ModelViewSet):

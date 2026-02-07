@@ -29,11 +29,24 @@ class Genre(models.Model):
         return self.name
 
 
+def play_image_path(instance: "Play" , filename: str) -> pathlib.Path:
+    filename = (
+        f"{slugify(instance.title)}-{uuid.uuid4()}"
+        + pathlib.Path(filename).suffix
+    )
+    return pathlib.Path("uploads/performances/") / pathlib.Path(filename)
+
+
 class Play(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     genres = models.ManyToManyField(Genre)
     actors = models.ManyToManyField(Actor)
+    image = models.ImageField(
+        upload_to=play_image_path,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         ordering = ["title"]
@@ -54,25 +67,12 @@ class TheatreHall(models.Model):
         return self.name
 
 
-def performance_image_path(instance: "Performance" , filename: str) -> pathlib.Path:
-    filename = (
-        f"{slugify(instance.title)}-{uuid.uuid4()}"
-        + pathlib.Path(filename).suffix
-    )
-    return pathlib.Path("uploads/performances/") / pathlib.Path(filename)
-
-
 class Performance(models.Model):
     show_time = models.DateTimeField()
     play = models.ForeignKey(Play, on_delete=models.CASCADE)
     theatre_hall = models.ForeignKey(
         TheatreHall,
         on_delete=models.CASCADE
-    )
-    image = models.ImageField(
-        upload_to=performance_image_path,
-        null=True,
-        blank=True
     )
 
 
@@ -133,17 +133,10 @@ class Ticket(models.Model):
             ValidationError
         )
 
-    def save(
-            self,
-            force_insert=False,
-            force_update=False,
-            using=None,
-            update_fields=None,
-    ):
+    def save(self, *args, **kwargs):
         self.full_clean()
-        super(Ticket, self).save(
-            force_insert, force_update, using, update_fields
-        )
+        super().save(*args, **kwargs)
+
 
     def __str__(self):
         return (

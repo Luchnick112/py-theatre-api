@@ -25,10 +25,16 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
+class PlayImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Play
+        fields = ("id", "image")
+
+
 class PlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
-        fields = ("id", "title", "description")
+        fields = ("id", "title", "description", "image")
 
 
 class PlayDetailSerializer(serializers.ModelSerializer):
@@ -41,7 +47,7 @@ class PlayDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Play
-        fields = ("id", "title", "description", "genres", "actors")
+        fields = ("id", "title", "description", "genres", "actors", "image")
 
 
 class TheatreHallSerializer(serializers.ModelSerializer):
@@ -60,7 +66,6 @@ class TheatreHallDetailSerializer(serializers.ModelSerializer):
     def get_plays(self, obj):
         performances = Performance.objects.filter(theatre_hall=obj)
         return PlayDetailSerializer([performance.play for performance in performances], many=True).data
-
 
 
 class PerformanceSerializer(serializers.ModelSerializer):
@@ -108,18 +113,20 @@ class TicketSerializer(serializers.ModelSerializer):
         read_only_fields = ("reservation",)
 
     def validate(self, attrs):
-        Ticket.validate_seat(
-            attrs["seat"],
-            attrs["performance"].theatre_hall.seats_in_row,
-            "seat",
-            serializers.ValidationError
-        )
-        Ticket.validate_seat(
-            attrs["row"],
-            attrs["performance"].theatre_hall.rows,
-            "row",
-            serializers.ValidationError
-        )
+        performance = attrs.get("performance")
+        if performance:
+            Ticket.validate_seat(
+                attrs["seat"],
+                performance.theatre_hall.seats_in_row,
+                "seat",
+                serializers.ValidationError
+            )
+            Ticket.validate_seat(
+                attrs["row"],
+                performance.theatre_hall.rows,
+                "row",
+                serializers.ValidationError
+            )
         return attrs
 
 
