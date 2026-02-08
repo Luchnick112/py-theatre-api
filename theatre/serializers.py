@@ -35,6 +35,7 @@ class PlaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Play
         fields = ("id", "title", "description", "image")
+        read_only_fields = ("image",)
 
 
 class PlayDetailSerializer(serializers.ModelSerializer):
