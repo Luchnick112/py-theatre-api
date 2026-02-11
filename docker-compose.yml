@@ -9,12 +9,13 @@ services:
     volumes:
       - ./:/app
       - my_media:/files/media
-    command: >
-      sh -c "python manage.py wait_for_db &&
-            python manage.py migrate &&
-            python manage.py runserver 0.0.0.0:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
+
 
   db:
     image: postgres:16-alpine
@@ -25,6 +26,11 @@ services:
       - "5432:5432"
     volumes:
       - my_db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U theatre" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   my_db:
