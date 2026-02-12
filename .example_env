@@ -1,0 +1,9 @@
+#DB
+POSTGRES_PASSWORD=my_app
+POSTGRES_USER=my_app
+POSTGRES_DB=my_app
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+PGDATA=/var/lib/postgresql/data
+#DJANGO
+SECRET_KEY="django-insecure-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
