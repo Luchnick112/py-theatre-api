@@ -31,8 +31,8 @@ python manage.py migrate
 
 ### 2. 📀 Create .env file
 
- In the project root, create a .env file with the following content:
-
+ In the project root, create an .env file with the following content:
+```
 POSTGRES_PASSWORD=your_password 
 POSTGRES_USER=your_user 
 POSTGRES_DB=your_db 
@@ -40,6 +40,7 @@ POSTGRES_HOST=db
 POSTGRES_PORT=5432 
 PGDATA=/var/lib/postgresql/data 
 SECRET_KEY=your_secret_key 
+```
 
 ---
 
